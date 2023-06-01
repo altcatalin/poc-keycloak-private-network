@@ -1,0 +1,57 @@
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:20.0
+    ports:
+      - 8080:8080
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+    command: ["start-dev", "--health-enabled=true"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/ready"]
+      start_period: 30s
+      interval: 10s
+      timeout: 10s
+      retries: 3
+  podinfo:
+    image: stefanprodan/podinfo:6.3.6
+  curl-jq:
+    image: registry.gitlab.com/gitlab-ci-utils/curl-jq:1.1.0
+    volumes:
+      - ./create_keycloak_client.sh:/tmp/create_keycloak_client.sh
+    command: ["/tmp/create_keycloak_client.sh", "keycloak:8080"]
+    depends_on:
+      keycloak:
+        condition: service_healthy
+        restart: true
+  oauth2-proxy:
+    image: quay.io/oauth2-proxy/oauth2-proxy:v7.4.0
+    ports:
+      - 4180:4180
+    environment:
+      OAUTH2_PROXY_HTTP_ADDRESS: 0.0.0.0:4180
+      OAUTH2_PROXY_EMAIL_DOMAINS: "*"
+      OAUTH2_PROXY_UPSTREAMS: http://podinfo:9898
+      OAUTH2_PROXY_COOKIE_SECRET: 1XbWlkbWOgKaN3B7P3rMvb9ZjmYmNiALh1pDzb5Lc9A=
+
+      # OIDC configuration
+      OAUTH2_PROXY_PROVIDER: keycloak-oidc
+      OAUTH2_PROXY_CLIENT_ID: podinfo
+      OAUTH2_PROXY_CLIENT_SECRET: podinfo
+      OAUTH2_PROXY_REDIRECT_URL: http://localhost:4180/oauth2/callback
+      OAUTH2_PROXY_CODE_CHALLENGE_METHOD: S256
+
+      # bypass OIDC endpoint discovery. --login-url, --redeem-url and --oidc-jwks-url must be configured
+      OAUTH2_PROXY_SKIP_OIDC_DISCOVERY: "true"
+      OAUTH2_PROXY_OIDC_ISSUER_URL: http://localhost:8080/realms/master
+
+      # use external hostname for browser redirect
+      OAUTH2_PROXY_LOGIN_URL: http://localhost:8080/realms/master/protocol/openid-connect/auth
+
+      # use internal hostname for authorization, token and jwks
+      OAUTH2_PROXY_REDEEM_URL: http://keycloak:8080/realms/master/protocol/openid-connect/token
+      OAUTH2_PROXY_OIDC_JWKS_URL: http://keycloak:8080/realms/master/protocol/openid-connect/certs
+    depends_on:
+      keycloak:
+        condition: service_healthy
+        restart: true
