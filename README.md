@@ -14,10 +14,10 @@ Start containers and wait until `oauth2-proxy` service is healty (~60s). Open [h
 docker compose up
 ```
 
-Stops containers and removes containers, networks, volumes, and images created by up.
+Stop containers and remove containers, networks, volumes.
 
 ```shell
 docker compose down -v --remove-orphans
 ```
 
-Check `oauth2-proxy` service from [docker-compose.yaml](docker-compose.yaml) for OIDC client configuration.
+Check `oauth2-proxy` service from [docker-compose.yml](docker-compose.yml) for OIDC client configuration.
