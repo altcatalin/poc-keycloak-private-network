@@ -1,4 +1,4 @@
-# keycloak-private-backend
+# poc-keycloak-private-network
 
 How to use [Keycloak backend endpoint](https://www.keycloak.org/server/hostname) through a private network.
 
