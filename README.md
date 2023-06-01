@@ -20,4 +20,4 @@ Stop containers and remove containers, networks, volumes.
 docker compose down -v --remove-orphans
 ```
 
-Check `oauth2-proxy` service from [docker-compose.yml](docker-compose.yml) for OIDC client configuration.
+Check `oauth2-proxy` service from [docker-compose.yml](docker-compose.yml#L37) for OIDC client configuration.
